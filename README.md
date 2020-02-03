@@ -1,1 +1,1 @@
-Simple api about trash tagging.
+Simple api about trash tagging.gi

@@ -5,8 +5,9 @@ const app = express();
 const mongoose = require('mongoose');
 const multer = require('multer');
 const { fileStorage, fileFilter } = require('./util/fileUploads');
-const geoTagsRouter = require('./routes/geoTags');
-const taggedLocationsRouter = require('./routes/taggedLocations');
+const geoTagsShowRouter = require('./routes/geoTagsShow');
+const PostingtaggedLocationsRouter = require('./routes/TaggingLocations');
+const deletetagRouter=require('./routes/deleteGeoTags');
 
 app.use(express.urlencoded({ extended: false }));
 app.use(
@@ -14,8 +15,11 @@ app.use(
 );
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use('/api/v1', geoTagsRouter);
-app.use('/api/v1', taggedLocationsRouter);
+
+
+app.get('/api/v1/geotags/', geoTagsShowRouter);
+app.post('/api/v1/geotags/', PostingtaggedLocationsRouter);
+app.delete('/api/v1/geotags/', deletetagRouter);
 
 mongoose
   .connect(process.env.MONGODB_URI_LOCAL, {
@@ -23,7 +27,7 @@ mongoose
     useUnifiedTopology: true
   })
   .then(result => {
-    console.log('db connected');
+    console.log('db connected by this');
   })
   .catch(err => {
     console.log(err);

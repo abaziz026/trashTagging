@@ -2,23 +2,23 @@
 const fileHelper = require('../util/file');
 const GeoTags = require('../models/geoTagsModel');
 
-exports.getOneTag = (req, res) => {
-  const geoTagId = req.params.geoTagId;
-  console.log(geoTagId);
-  GeoTags.findById(geoTagId)
-    .then(data => {
-      console.log(data);
+exports.getOneTag = async (req, res) => {
+try{
+  const geoTagId = req.params.geotagId;
+  const geoTags= await GeoTags.findById(geoTagId);
+    
+      console.log(geoTags);
       res.status(200).json({
         status: 'success',
-        data: data
+        data: geoTags
       });
-    })
-    .catch(err => {
+    }
+    catch(error) {
       res.status(404).json({
-        status: 'failed',
-        err: err
+        status: 'Error',
+        err: error
       });
-    });
+    }
 };
 
 exports.deleteTag = (req, res) => {
@@ -42,8 +42,6 @@ exports.getManyTags = async (req, res) => {
     const offset = req.query.offset ? parseInt(req.query.offset) : 0;
     const size = req.query.size ? parseInt(req.query.size) : 10;
 
-    console.log(offset);
-    console.log(size);
     const geoTags = await GeoTags.find().sort({'createdAt': -1}).skip(offset).limit(size);
     console.log(geoTags);
     res.status(200).json( {status: 'success', data: geoTags });
@@ -57,35 +55,35 @@ exports.getManyTags = async (req, res) => {
 };
 
 
-exports.postTag = (req, res) => {
+exports.postTag = async (req, res) => {
   try{
   const latitude = req.body.latitude;
   const longitude = req.body.longitude;
   const trashScale = req.body.trashScale;
 
-  console.log(req.file);
-
   const picture = req.file;
+
   const pictureUrl = picture.path;
 
   console.log(`${latitude}  ${longitude}  ${picture}`);
   console.log('location tag');
-  res.send('post tag location ');
+  try{
+  res.status(200).json({message:'Insertion Successfull'});
   const geoTag = new GeoTags({
     latitude: latitude,
     longitude: longitude,
     trashScale: trashScale,
     photo: pictureUrl
   });
-  geoTag
-    .save()
-    .then(result => {
+  const geotag= await geoTag.save(); 
       console.log('trash tag created');
-      console.log(result);
-    })
-    .catch(err => {
-      console.log(err);
-    });
+      console.log(geotag);
+ 
+}
+catch(errr){
+  console.log(error);
+  res.json({error: errr});
+}
   } catch (error) {
     console.log(error);
     res.json({error: error});
@@ -93,41 +91,27 @@ exports.postTag = (req, res) => {
 
 };
 
-exports.updateTag = (req, res) => {
-  const geoTagId = req.params.taggedLocationId;
-  const updateLatitude = req.body.latitude;
-  const updateLongitude = req.body.longitude;
+exports.updateTag = async (req, res) => {
+  try{
+    const geoTagId = req.params.geotagId;
   const updateTrashScale = req.body.trashScale;
-  const picture = req.file;
-  const pictureUrl = picture.path;
-  console.log(pictureUrl);
-  GeoTags.findById(geoTagId)
-    .then(taggedLocation => {
-      console.log(taggedLocation.photo[0]);
-      console.log(taggedLocation.pictureUrl);
-      taggedLocation.latitude = updateLatitude;
-      taggedLocation.longitude = updateLongitude;
-      taggedLocation.trashScale = updateTrashScale;
-      if (picture) {
-        fileHelper.deleteFile(taggedLocation.photo[0].toString());
-        taggedLocation.photo = pictureUrl;
-      }
-      return taggedLocation.save().then(result => {
-        console.log('Location updated!');
-        console.log(result);
+
+  const geotag= await GeoTags.findById(geoTagId);
+      geotag.trashScale = updateTrashScale;
+      geotag.save();
+
         res.status(200).json({
           status: 'success',
           message: 'Geo tag updated',
-          data: result
+          data: geotag
         });
-      });
-    })
-    .catch(err => {
+    }
+    catch(error ) {
       res.status(500).json({
-        status: 'fail',
-        message: 'some error occur',
-        err: err
+        status: 'data is not found',
+        message: 'some error occur in the find by id',
+        err: error
       });
-      console.log(err);
-    });
+     
+    }
 };

@@ -5,9 +5,9 @@ const app = express();
 const mongoose = require('mongoose');
 const multer = require('multer');
 const { fileStorage, fileFilter } = require('./util/fileUploads');
-const geoTagsShowRouter = require('./routes/geoTagsShow');
-const PostingtaggedLocationsRouter = require('./routes/TaggingLocations');
-const deletetagRouter=require('./routes/deleteGeoTags');
+const geoTagController = require('./controllers/geoTagShowController');
+const deletegeoTagController = require('./controllers/deleteGeoTagController');
+const taggedLocationsController = require('./controllers/LocationsTaggingController');
 
 app.use(express.urlencoded({ extended: false }));
 app.use(
@@ -17,9 +17,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 
-app.get('/api/v1/geotags/', geoTagsShowRouter);
-app.post('/api/v1/geotags/', PostingtaggedLocationsRouter);
-app.delete('/api/v1/geotags/', deletetagRouter);
+
+app.get('/api/v1/geotags/:geotagId',  geoTagController.getOneTagLocation);
+app.get('/api/v1/geotags/?offset=*&limit=*', geoTagController.getManyTagLocation);
+app.post('/api/v1/geotags/:taggedLocationId', taggedLocationsController.updateTaggedLocation);
+app.post('/api/v1/geotags/',taggedLocationsController.postTagLocation);
+app.delete('/api/v1/geotags/:geotagId', deletegeoTagController.deleteTagLocation);
+
+
 
 mongoose
   .connect(process.env.MONGODB_URI_LOCAL, {
@@ -33,6 +38,6 @@ mongoose
     console.log(err);
   });
 
-app.listen(8080, () => {
-  console.log('app is listening on port 8080');
+app.listen(3000, () => {
+  console.log('app is listening on port 3000');
 });

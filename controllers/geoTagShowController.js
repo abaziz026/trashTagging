@@ -1,7 +1,7 @@
 const GeoTags = require('../models/geoTagsModel');
 
 exports.getOneTagLocation = (req, res) => {
-  const geoTagId = req.params.taggedLocationId;
+  const geoTagId = req.params.geoTagId;
   console.log(geoTagId);
   GeoTags.findById(geoTagId)
     .then(data => {

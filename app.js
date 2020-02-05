@@ -5,7 +5,13 @@ const app = express();
 const mongoose = require('mongoose');
 const multer = require('multer');
 const { fileStorage, fileFilter } = require('./util/fileUploads');
-const { getOneTag, getManyTags, postTag, updateTag, deleteTag } = require('./controllers/geoTags');
+const {
+  getOneTag,
+  getManyTags,
+  postTag,
+  updateTag,
+  deleteTag
+} = require('./controllers/geoTags');
 app.use(express.urlencoded({ extended: false }));
 app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
@@ -13,15 +19,11 @@ app.use(
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-
-
-app.get('/api/v1/geotags/:geotagId',  getOneTag);
+app.get('/api/v1/geotags/:geotagId', getOneTag);
 app.get('/api/v1/geotags/', getManyTags);
 app.post('/api/v1/geotags/:taggedLocationId', updateTag);
-app.post('/api/v1/geotags/',postTag);
+app.post('/api/v1/geotags/', postTag);
 app.delete('/api/v1/geotags/:geotagId', deleteTag);
-
-
 
 mongoose
   .connect(process.env.MONGODB_URI_LOCAL, {
@@ -29,7 +31,7 @@ mongoose
     useUnifiedTopology: true
   })
   .then(result => {
-    console.log('db connected by this');
+    console.log('db connected');
   })
   .catch(err => {
     console.log(err);

@@ -5,6 +5,7 @@ const deleteFile = filePath => {
     if (err) {
       if (err.errno === -4058) return true;
     } else {
+      throw err;
       console.error(err);
     }
   });

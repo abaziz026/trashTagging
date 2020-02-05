@@ -1,4 +1,3 @@
-
 const fileHelper = require('../util/file');
 const GeoTags = require('../models/geoTagsModel');
 
@@ -7,7 +6,6 @@ exports.getOneTag = (req, res) => {
   console.log(geoTagId);
   GeoTags.findById(geoTagId)
     .then(data => {
-      console.log(data);
       res.status(200).json({
         status: 'success',
         data: data
@@ -24,29 +22,31 @@ exports.getOneTag = (req, res) => {
 exports.deleteTag = (req, res) => {
   const geoTagId = req.params.taggedLocationId;
   console.log(geoTagId);
-  return GeoTags.findOneAndDelete({geoTagId:geoTagId}, options)
-  .then(deletedDocument => {
-    if(deletedDocument) {
-      console.log(`Successfully deleted document that had the form: ${deletedDocument}.`)
-    } else {
-      console.log("No document matches the provided query.")
-    }
-    return deletedDocument
-  })
-  .catch(err => console.error(`Failed to find and delete document: ${err}`))
+  return GeoTags.findOneAndDelete({ geoTagId: geoTagId }, options)
+    .then(deletedDocument => {
+      if (deletedDocument) {
+        console.log(
+          `Successfully deleted document that had the form: ${deletedDocument}.`
+        );
+      } else {
+        console.log('No document matches the provided query.');
+      }
+      return deletedDocument;
+    })
+    .catch(err => console.error(`Failed to find and delete document: ${err}`));
 };
-
 
 exports.getManyTags = async (req, res) => {
   try {
     const offset = req.query.offset ? parseInt(req.query.offset) : 0;
     const size = req.query.size ? parseInt(req.query.size) : 10;
 
-    console.log(offset);
-    console.log(size);
-    const geoTags = await GeoTags.find().sort({'createdAt': -1}).skip(offset).limit(size);
+    const geoTags = await GeoTags.find()
+      .sort({ createdAt: -1 })
+      .skip(offset)
+      .limit(size);
     console.log(geoTags);
-    res.status(200).json( {status: 'success', data: geoTags });
+    res.status(200).json({ status: 'success', data: geoTags });
   } catch (error) {
     console.log(error);
     res.json({
@@ -56,41 +56,41 @@ exports.getManyTags = async (req, res) => {
   }
 };
 
-
 exports.postTag = (req, res) => {
-  try{
-  const latitude = req.body.latitude;
-  const longitude = req.body.longitude;
-  const trashScale = req.body.trashScale;
+  try {
+    const latitude = req.body.latitude;
+    const longitude = req.body.longitude;
+    const trashScale = req.body.trashScale;
 
-  console.log(req.file);
+    const picture = req.file;
+    const pictureUrl = picture.path;
 
-  const picture = req.file;
-  const pictureUrl = picture.path;
-
-  console.log(`${latitude}  ${longitude}  ${picture}`);
-  console.log('location tag');
-  res.send('post tag location ');
-  const geoTag = new GeoTags({
-    latitude: latitude,
-    longitude: longitude,
-    trashScale: trashScale,
-    photo: pictureUrl
-  });
-  geoTag
-    .save()
-    .then(result => {
-      console.log('trash tag created');
-      console.log(result);
-    })
-    .catch(err => {
-      console.log(err);
+    const geoTag = new GeoTags({
+      latitude: latitude,
+      longitude: longitude,
+      trashScale: trashScale,
+      photos: pictureUrl
     });
+    geoTag
+      .save()
+      .then(result => {
+        res.status(201).json({
+          status: 'New Geo tag Created.',
+          data: {
+            Latitude: result.latitude,
+            Longitude: result.longitude,
+            TrashScale: result.trashScale,
+            photo: result.photos
+          }
+        });
+      })
+      .catch(err => {
+        console.log(err);
+      });
   } catch (error) {
     console.log(error);
-    res.json({error: error});
+    res.json({ error: error });
   }
-
 };
 
 exports.updateTag = (req, res) => {
@@ -103,8 +103,6 @@ exports.updateTag = (req, res) => {
   console.log(pictureUrl);
   GeoTags.findById(geoTagId)
     .then(taggedLocation => {
-      console.log(taggedLocation.photo[0]);
-      console.log(taggedLocation.pictureUrl);
       taggedLocation.latitude = updateLatitude;
       taggedLocation.longitude = updateLongitude;
       taggedLocation.trashScale = updateTrashScale;
@@ -114,7 +112,7 @@ exports.updateTag = (req, res) => {
       }
       return taggedLocation.save().then(result => {
         console.log('Location updated!');
-        console.log(result);
+
         res.status(200).json({
           status: 'success',
           message: 'Geo tag updated',
@@ -128,6 +126,5 @@ exports.updateTag = (req, res) => {
         message: 'some error occur',
         err: err
       });
-      console.log(err);
     });
 };

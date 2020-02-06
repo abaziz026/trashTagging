@@ -36,7 +36,7 @@ mongoose
   .catch(err => {
     console.log(err);
   });
-
-app.listen(3000, () => {
-  console.log('app is listening on port 3000');
+const port=process.env.port || 3000;
+app.listen(port, () => {
+  console.log(`app is listening on ${port}`);
 });

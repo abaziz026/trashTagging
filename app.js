@@ -21,7 +21,7 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.get('/api/v1/geotags/:geotagId', getOneTag);
 app.get('/api/v1/geotags/', getManyTags);
-app.post('/api/v1/geotags/:taggedLocationId', updateTag);
+app.post('/api/v1/geotags/:geotagId', updateTag);
 app.post('/api/v1/geotags/', postTag);
 app.delete('/api/v1/geotags/:geotagId', deleteTag);
 

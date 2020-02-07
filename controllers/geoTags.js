@@ -1,4 +1,3 @@
-const fileHelper = require('../util/file');
 const GeoTags = require('../models/geoTagsModel');
 
 exports.getOneTag = async (req, res) => {
@@ -61,9 +60,18 @@ exports.postTag = async (req, res) => {
     const longitude = req.body.longitude;
     const trashScale = req.body.trashScale;
 
-    const picture = req.file;
-
-    const pictureUrl = picture.path;
+    const picture = req.file ? req.file : null;
+    if (picture == null) {
+      console.log("null");
+    }
+    const pictureUrl = picture != null ? picture.path : null;
+    const checksum = null;
+    if (pictureUrl != null) {
+      checksum = "this is checksum";
+    }
+    const photoDetails = {
+      "photourl": pictureUrl, "checksum": checksum
+    }
 
     console.log(`${latitude}  ${longitude}  ${pictureUrl}`);
     console.log('location tag');
@@ -72,7 +80,7 @@ exports.postTag = async (req, res) => {
       latitude: latitude,
       longitude: longitude,
       trashScale: trashScale,
-      photo: pictureUrl
+      photo: photoDetails
     });
     const geotag = await geoTag.save();
     console.log('trash tag created');

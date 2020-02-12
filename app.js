@@ -7,7 +7,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
-const AppError = require('./util/appError');
+
 const multer = require('multer');
 const app = express();
 const { fileStorage, fileFilter } = require('./util/fileUploads');
@@ -27,10 +27,11 @@ app.use(helmet());
 
 // Limit requests from same API
 const limiter = rateLimit({
-  max: 200,
-  windowMs: 60 * 60 * 1000,
+  max: 10,
+  windowMs: 1000,
   message: 'Too many requests from this IP, please try again in an hour!'
 });
+
 app.use('/api', limiter);
 
 // Body parser, reading data from body into req.body
@@ -65,6 +66,7 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true
+    //useFindAndModify: false
   })
   .then(result => {
     console.log('db connected');

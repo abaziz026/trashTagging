@@ -3,24 +3,13 @@ const multer = require('multer');
 const sharp = require('sharp');
 const User = require('./../models/userModel');
 
-const AppError = require('./../util/appError');
-
-// const multerStorage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, 'images');
-//   },
-//   filename: (req, file, cb) => {
-//     const ext = file.mimetype.split('/')[1];
-//     cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
-//   }
-// });
 const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
-    cb(new AppError('Not an image! Please upload only images.', 400), false);
+    cb(null, false);
   }
 };
 
@@ -46,10 +35,13 @@ exports.resizeUserPhoto = async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
-    next(new AppError(error, 500));
+    res.status(500).json({
+      status: 'error',
+      message: error
+    });
   }
 };
-
+//function for filtering which fields are allowed to update on certain routes.
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
   Object.keys(obj).forEach(el => {
@@ -66,13 +58,11 @@ exports.getMe = (req, res, next) => {
 exports.updateMe = async (req, res, next) => {
   try {
     // 1) Create error if user POSTs password data
-    if (req.body.password || req.body.passwordConfirm) {
-      return next(
-        new AppError(
-          'This route is not for password updates. Please use /updateMyPassword.',
-          400
-        )
-      );
+    if (req.body.password) {
+      res.status(400).json({
+        message:
+          'This route is not for password updates. Please use /updateMyPassword.'
+      });
     }
     // 2) Filtered out unwanted fields names that are not allowed to be updated
     const filteredBody = filterObj(req.body, 'name', 'email');
@@ -102,37 +92,18 @@ exports.updateMe = async (req, res, next) => {
   }
 };
 
-exports.deleteMe = async (req, res, next) => {
-  try {
-    await User.findByIdAndUpdate(req.user.id, { active: false });
-
-    res.status(204).json({
-      status: 'success',
-      data: null
-    });
-  } catch (error) {
-    console.log(error);
-    if (!result) {
-      res.status(404).json({
-        status: 'error',
-
-        message: 'No document found with that ID'
-      });
-    } else {
-      res.status(500).json({
-        status: 'error',
-        data: error
-      });
-    }
-  }
-};
-
 exports.getUser = async (req, res, next) => {
   let result;
   try {
     let query = User.findById(req.params.id);
 
     result = await query;
+    if (!result) {
+      res.status(404).json({
+        status: 'Not Found',
+        message: 'No user found with this id'
+      });
+    }
 
     res.status(200).json({
       status: 'success',
@@ -141,21 +112,13 @@ exports.getUser = async (req, res, next) => {
       }
     });
   } catch (error) {
-    if (!result) {
-      res.status(404).json({
-        status: 'error',
+    res.status(500).json({
+      status: 'error',
 
-        message: 'No document found with that ID'
-      });
-    } else {
-      res.status(500).json({
-        status: 'error',
-
-        data: {
-          error: error
-        }
-      });
-    }
+      data: {
+        error: error
+      }
+    });
   }
 };
 
@@ -169,6 +132,13 @@ exports.getAllUsers = async (req, res, next) => {
       .limit(size);
 
     result = await query;
+    if (!result) {
+      res.status(404).json({
+        status: 'error',
+
+        message: 'No document found'
+      });
+    }
 
     res.status(200).json({
       status: 'success',
@@ -177,29 +147,35 @@ exports.getAllUsers = async (req, res, next) => {
       }
     });
   } catch (error) {
-    if (!result) {
-      res.status(404).json({
-        status: 'error',
+    res.status(500).json({
+      status: 'error',
 
-        message: 'No document found'
-      });
-    } else {
-      res.status(500).json({
-        status: 'error',
-
-        data: {
-          error: error
-        }
-      });
-    }
+      data: {
+        error: error
+      }
+    });
   }
 };
 
-// Do NOT update passwords with this!
+// update user by admin
 exports.updateUser = async (req, res, next) => {
-  let result;
   try {
-    result = await User.findByIdAndUpdate(req.params.id, req.body, {
+    if (!(await User.findById(req.params.id))) {
+      res.status(404).json({
+        status: 'error',
+
+        message: 'No document found with that ID'
+      });
+    }
+    //to restrict the admin so that they cannot changed the user passwords.
+    if (req.body.password) {
+      req.body.password = undefined;
+      res.status(400).json({
+        status: 'bad request',
+        message: 'Admin do not have the permission to change the user password.'
+      });
+    }
+    const result = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     });
@@ -211,46 +187,39 @@ exports.updateUser = async (req, res, next) => {
       }
     });
   } catch (error) {
-    if (!result) {
-      res.status(404).json({
-        status: 'error',
+    console.log(error);
+    res.status(500).json({
+      status: 'error',
 
-        message: 'No document found with that ID'
-      });
-    } else {
-      res.status(500).json({
-        status: 'error',
-
-        data: {
-          error: error
-        }
-      });
-    }
+      error: error
+    });
   }
 };
 
 exports.deleteUser = async (req, res, next) => {
-  let result;
   try {
-    result = await User.findByIdAndDelete(req.params.id);
-
-    res.status(204).json({
-      status: 'success',
-      message: 'User successfully Deleted.'
+    let result = await User.findByIdAndUpdate(req.params.id, {
+      active: false
     });
-  } catch (error) {
-    console.log(error);
     if (!result) {
       res.status(404).json({
         status: 'error',
 
         message: 'No document found with that ID'
       });
-    } else {
-      res.status(500).json({
-        status: 'error',
-        data: error
-      });
     }
+    console.log(result);
+    res.status(204).json({
+      status: 'success',
+      message: 'user deactivated',
+      data: { result }
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      status: 'error',
+      data: error
+    });
   }
 };

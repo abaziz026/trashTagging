@@ -38,7 +38,7 @@ exports.signup = async (req, res, next) => {
     const { email } = req.body;
     //check if email already exists.
     if (await User.findOne({ email })) {
-      res.status(400).json({
+      return res.status(400).json({
         status: 'Bad Request',
         message: 'User with this email already exists.please try another email'
       });
@@ -72,7 +72,7 @@ exports.login = async (req, res, next) => {
 
     // 1) Check if email and password exist
     if (!email || !password) {
-      res.status(400).json({
+      return res.status(400).json({
         status: 'bad request',
         message: 'Please provide email and password!'
       });
@@ -81,7 +81,7 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !(await user.correctPassword(password, user.password))) {
-      res.status(401).json({
+      return res.status(401).json({
         status: 'unauthorized',
         message: 'Incorrect email or password'
       });
@@ -110,7 +110,7 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-      res.status(401).json({
+      return res.status(401).json({
         status: 'unauthorized',
         message: 'You are not logged in! Please log in to get access.'
       });
@@ -122,7 +122,7 @@ exports.protect = async (req, res, next) => {
     // 3) Check if user still exists
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
-      res.status(401).json({
+      return res.status(401).json({
         status: 'unauthorized',
         message: 'The user belonging to this token does no longer exist.'
       });
@@ -133,6 +133,12 @@ exports.protect = async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
+    if (error.message === 'invalid token') {
+      return res.status(401).json({
+        status: 'jwt error',
+        message: 'invalid token.'
+      });
+    }
     res.status(500).json({
       status: 'server error',
       message: 'something went wrong please try again later.'
@@ -144,7 +150,7 @@ exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     // roles ['admin', etc]. role='user'
     if (!roles.includes(req.user.role)) {
-      res.status(403).json({
+      return res.status(403).json({
         status: 'Access Denied',
         message: 'You do not have permission to perform this action.'
       });
@@ -160,7 +166,7 @@ exports.forgotPassword = async (req, res, next) => {
     // 1) Get user based on POSTed email
     user = await User.findOne({ email: req.body.email });
     if (!user) {
-      res.status(404).json({
+      return res.status(404).json({
         status: 'not found',
         message: 'There is no user with email address.'
       });
@@ -184,7 +190,7 @@ exports.forgotPassword = async (req, res, next) => {
       message: message
     });
   } catch (error) {
-    console.log(user);
+    //console.log(user);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
@@ -212,7 +218,7 @@ exports.resetPassword = async (req, res, next) => {
 
     // 2) If token has not expired, and there is user, set the new password
     if (!user) {
-      res.status(400).json({
+      return res.status(400).json({
         status: 'Bad Request',
         message: 'Token is invalid or expired.'
       });
@@ -244,7 +250,7 @@ exports.updatePassword = async (req, res, next) => {
     if (
       !(await user.correctPassword(req.body.passwordCurrent, user.password))
     ) {
-      res.status(401).json({
+      return res.status(401).json({
         status: 'unauthorized',
         message: 'Your current password is wrong.'
       });

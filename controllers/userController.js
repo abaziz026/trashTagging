@@ -59,7 +59,7 @@ exports.updateMe = async (req, res, next) => {
   try {
     // 1) Create error if user POSTs password data
     if (req.body.password) {
-      res.status(400).json({
+      return res.status(400).json({
         message:
           'This route is not for password updates. Please use /updateMyPassword.'
       });
@@ -95,11 +95,11 @@ exports.updateMe = async (req, res, next) => {
 exports.getUser = async (req, res, next) => {
   let result;
   try {
-    let query = User.findById(req.params.id);
+    let query = User.findById(req.params.id).select('-role');
 
     result = await query;
     if (!result) {
-      res.status(404).json({
+      return res.status(404).json({
         status: 'Not Found',
         message: 'No user found with this id'
       });
@@ -133,7 +133,7 @@ exports.getAllUsers = async (req, res, next) => {
 
     result = await query;
     if (!result) {
-      res.status(404).json({
+      return res.status(404).json({
         status: 'error',
 
         message: 'No document found'
@@ -161,7 +161,7 @@ exports.getAllUsers = async (req, res, next) => {
 exports.updateUser = async (req, res, next) => {
   try {
     if (!(await User.findById(req.params.id))) {
-      res.status(404).json({
+      return res.status(404).json({
         status: 'error',
 
         message: 'No document found with that ID'
@@ -170,7 +170,7 @@ exports.updateUser = async (req, res, next) => {
     //to restrict the admin so that they cannot changed the user passwords.
     if (req.body.password) {
       req.body.password = undefined;
-      res.status(400).json({
+      return res.status(400).json({
         status: 'bad request',
         message: 'Admin do not have the permission to change the user password.'
       });
@@ -200,16 +200,16 @@ exports.deleteUser = async (req, res, next) => {
   try {
     let result = await User.findByIdAndUpdate(req.params.id, {
       active: false
-    });
+    }).select('+active');
     if (!result) {
-      res.status(404).json({
+      return res.status(404).json({
         status: 'error',
 
         message: 'No document found with that ID'
       });
     }
     console.log(result);
-    res.status(204).json({
+    res.status(200).json({
       status: 'success',
       message: 'user deactivated',
       data: { result }

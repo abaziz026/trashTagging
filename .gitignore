@@ -2,3 +2,4 @@
 .eslintrc.js
 node_modules
 images
+.env

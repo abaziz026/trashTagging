@@ -10,6 +10,7 @@ const mongoose = require('mongoose');
 
 const multer = require('multer');
 const app = express();
+const { addPhotos, deletePhoto } = require('./controllers/geoPhotos');
 const { fileStorage, fileFilter } = require('./util/fileUploads');
 const {
   getOneTag,
@@ -59,7 +60,10 @@ app.get('/api/v1/geotags/:geotagId', getOneTag);
 app.get('/api/v1/geotags/', getManyTags);
 app.post('/api/v1/geotags/:geotagId', updateTag);
 app.post('/api/v1/geotags/', postTag);
+app.post('/api/v1/geotags/:geotagId/addPhotos', addPhotos);
 app.delete('/api/v1/geotags/:geotagId', deleteTag);
+
+app.delete('/api/v1/geotags/:geotagId/Photos/:checksum', deletePhoto);
 
 mongoose
   .connect(process.env.MONGODB_URI_LOCAL, {
@@ -74,7 +78,8 @@ mongoose
   .catch(err => {
     console.log(err);
   });
-
-app.listen(3000, () => {
-  console.log('app is listening on port 3000');
+const port = process.env.port || 3000;
+app.listen(port, () => {
+  console.log(`app is listening on ${port}`);
 });
+

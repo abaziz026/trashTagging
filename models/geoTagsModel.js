@@ -14,7 +14,7 @@ var geoTagsSchema = new Schema({
     type: Number,
     required: true
   },
-  photo: {
+  photos: {
     type: []
   },
   createdAt: { type: Date, default: Date.now() }
